@@ -1,0 +1,134 @@
+<template>
+  <div class="mx-5">
+    <h1 class="text-center text-white pt-5">Update profil</h1>
+    
+
+    <div class="row pt-5">
+
+      <form id="create-post-form" @submit.prevent="editUser" class="form-wrapper">
+        <div class="form-group">
+          <label for="title" class="text-white"> Full Name </label>
+          <input
+            type="text"
+            id="full_name"
+            v-model="user.full_name"
+            name="title"
+            class="form-control"
+            :class="{ 'is-invalid': errors && errors.full_name }"
+            placeholder="Enter full name"
+          />
+          <div class="invalid-feedback" v-if="errors && errors.full_name">
+            {{ errors.full_name.msg }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="title" class="text-white"> Email </label>
+          <input
+            type="text"
+            id="email"
+            v-model="user.email"
+            name="title"
+            class="form-control"
+            :class="{ 'is-invalid': errors && errors.email }"
+            placeholder="Enter email"
+          />
+          <div class="invalid-feedback" v-if="errors && errors.email">
+            {{ errors.email.msg }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="title" class="text-white"> Password </label>
+          <input
+            type="text"
+            id="password"
+            v-model="user.password"
+            name="title"
+            class="form-control"
+            :class="{ 'is-invalid': errors && errors.password }"
+            placeholder="Enter password"
+          />
+          <div class="invalid-feedback" v-if="errors && errors.password">
+            {{ errors.password.msg }}
+          </div>
+        </div>
+
+        <div class="text-center mt-20">
+                      <button class="button nuxt-link-active" type="submit">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script>
+const bcrypt = require('bcryptjs')
+
+export default {
+  middleware: 'isAdmin',
+  data() {
+    return {
+      errors: null,
+      user: [],
+      samePassword: false,
+    }
+  },
+
+  async asyncData(context) {
+    const { data } = await context.$axios.get(
+      '/api/users/id/' + context.route.params.id
+    )
+    console.log('data', data)
+    return {
+      user: data,
+    }
+  },
+
+  methods: {
+    editUser() {
+      const userData = {
+        role: this.user.role,
+        full_name: this.user.full_name,
+        email: this.user.email,
+        password: this.user.password,
+        databasePassword: null,
+      }
+
+      this.$axios.get('/api/users/id/' + this.$route.params.id).then((data) => {
+        this.databasePassword = data.data.password
+        if (userData.password !== this.databasePassword) {
+          const salt = bcrypt.genSaltSync(10)
+          userData.password = bcrypt.hashSync(userData.password, salt)
+        } else {
+          userData.password = this.databasePassword
+        }
+
+        this.$axios
+          .put(`api/users/` + this.$route.params.id, userData)
+          .then((data) => {
+            // this.$auth.setUser(userData)
+            this.$router.go(-1)
+          })
+          .catch((error) => {
+            if (error.response.data.errors) {
+              this.errors = error.response.data.errors
+              console.log(this.errors.email.msg)
+            }
+          })
+      })
+    },
+  },
+}
+</script>
+
+<style scoped>
+.form-wrapper {
+  width: 30rem !important;
+  margin: 0 auto !important;
+}
+
+h3 {
+  color: #ffffff !important;
+}
+</style>

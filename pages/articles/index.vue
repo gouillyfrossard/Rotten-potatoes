@@ -1,0 +1,47 @@
+<template>
+  <div class="mx-5">
+    <h1 class="text-center text-white pt-5 pb-5">All my comments</h1>
+
+
+    <div class="alert alert-success" v-if="$route.params.created == 'yes'">
+      Record added successfully
+    </div>
+    <div class="alert alert-success" v-if="$route.params.deleted == 'yes'">
+      Record deleted successfully
+    </div>
+
+    <div class="list-group container-md" v-if="articles.length">
+      <div v-for="article in articles" :key="article._id">
+        <nuxt-link
+          v-if="article.author_id == userId"
+          class="list-group-item list-group-item-action"
+          :to="'/articles/' + article._id"
+        >
+          For <i>{{ article.title }}</i> at {{ article.created_at.slice(0, 16) }} <b>- noted
+          {{ article.note }}</b>
+        </nuxt-link>
+      </div>
+    </div>
+
+    <div class="alert alert-info" v-else>No records found.</div>
+  </div>
+</template>
+
+<script>
+export default {
+   data() {
+    return {
+      userId: '',
+    }
+  },
+  mounted() {
+    this.userId = this.$auth.user._id ? this.$auth.user._id : ''
+  },
+  async asyncData(context) {
+    const { data } = await context.$axios.get('/api/articles')
+    return {
+      articles: data,
+    }
+  },
+}
+</script>
